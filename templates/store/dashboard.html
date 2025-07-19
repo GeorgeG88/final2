@@ -1,0 +1,141 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Outfitr{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Welcome, {{ user.username }}!</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recently Viewed</h5>
+            </div>
+            <div class="card-body">
+                {% if recently_viewed %}
+                <div class="row row-cols-1 row-cols-md-3 g-3">
+                    {% for viewed in recently_viewed %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <a href="{{ viewed.product.get_absolute_url }}">
+                                {% if viewed.product.image %}
+                                <img src="{{ viewed.product.image.url }}" class="card-img-top" alt="{{ viewed.product.name }}">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                    <span class="text-muted">No image</span>
+                                </div>
+                                {% endif %}
+                            </a>
+                            <div class="card-body">
+                                <h6 class="card-title">{{ viewed.product.name }}</h6>
+                                <p class="text-primary fw-bold">${{ viewed.product.price }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No recently viewed items.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Your Reviews</h5>
+            </div>
+            <div class="card-body">
+                {% if reviews %}
+                {% for review in reviews %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <h6><a href="{{ review.product.get_absolute_url }}">{{ review.product.name }}</a></h6>
+                        <div class="rating">
+                            {% for i in "12345" %}
+                                {% if i|add:0 <= review.rating %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p class="text-muted">{{ review.created_at|date:"F j, Y" }}</p>
+                    <p>{{ review.comment|truncatechars:100 }}</p>
+                </div>
+                {% endfor %}
+                <a href="#" class="btn btn-outline-primary">View All Reviews</a>
+                {% else %}
+                <p class="text-muted">You haven't reviewed any products yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Your Wishlist</h5>
+            </div>
+            <div class="card-body">
+                {% if wishlist %}
+                <div class="list-group">
+                    {% for product in wishlist %}
+                    <div class="list-group-item">
+                        <div class="d-flex">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" class="me-3" width="60" alt="{{ product.name }}">
+                            {% else %}
+                            <div class="bg-light me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <i class="bi bi-image text-muted"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6>{{ product.name }}</h6>
+                                <p class="text-primary mb-0">${{ product.price }}</p>
+                                <form action="{% url 'remove_from_wishlist' product.id %}" method="POST" class="mt-1">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Your wishlist is empty.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Shopping Cart</h5>
+            </div>
+            <div class="card-body">
+                {% if cart.items.all %}
+                <ul class="list-group">
+                    {% for item in cart.items.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6>{{ item.product.name }}</h6>
+                            <span class="text-muted">${{ item.product.price }} x {{ item.quantity }}</span>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${{ item.total_price }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="d-flex justify-content-between mt-3">
+                    <strong>Total:</strong>
+                    <strong>${{ total }}</strong>
+                </div>
+                <a href="{% url 'cart' %}" class="btn btn-primary w-100 mt-3">View Cart</a>
+                {% else %}
+                <p class="text-muted">Your cart is empty.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Home - Outfitr{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5>Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{% url 'home' %}">
+                    <div class="mb-3">
+                        <label class="form-label">Price Range</label>
+                        <div class="row">
+                            <div class="col">
+                                <input type="number" name="min_price" class="form-control" placeholder="Min" value="{{ min_price }}">
+                            </div>
+                            <div class="col">
+                                <input type="number" name="max_price" class="form-control" placeholder="Max" value="{{ max_price }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Brand</label>
+                        <select name="brand" class="form-select">
+                            <option value="">All Brands</option>
+                            {% for brand in brands %}
+                                <option value="{{ brand }}" {% if selected_brand == brand %}selected{% endif %}>{{ brand }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <select name="color" class="form-select">
+                            <option value="">All Colors</option>
+                            {% for color in colors %}
+                                <option value="{{ color }}" {% if selected_color == color %}selected{% endif %}>{{ color }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Size</label>
+                        <select name="size" class="form-select">
+                            <option value="">All Sizes</option>
+                            {% for size in sizes %}
+                                <option value="{{ size }}" {% if selected_size == size %}selected{% endif %}>{{ size }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <h2 class="mb-4">
+            {% if category %}{{ category.name }}{% endif %}
+            {% if subcategory %}{{ subcategory.name }}{% endif %}
+            {% if not category and not subcategory %}All Products{% endif %}
+        </h2>
+        
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for product in products %}
+            <div class="col">
+                <div class="card h-100">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <span class="text-muted">No image</span>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description|truncatechars:100 }}</p>
+                        <p class="text-primary fw-bold">${{ product.price }}</p>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ product.get_absolute_url }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                            {% if user.is_authenticated %}
+                            <form action="{% url 'add_to_cart' product.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-primary">Add to Cart</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">No products found.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if recently_viewed and user.is_authenticated %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">Recently Viewed</h3>
+        <div class="d-flex overflow-auto">
+            {% for viewed in recently_viewed %}
+            <div class="card me-3" style="width: 16rem;">
+                <a href="{{ viewed.product.get_absolute_url }}">
+                    {% if viewed.product.image %}
+                    <img src="{{ viewed.product.image.url }}" class="card-img-top" alt="{{ viewed.product.name }}">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <span class="text-muted">No image</span>
+                    </div>
+                    {% endif %}
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ viewed.product.name }}</h5>
+                    <p class="text-primary fw-bold">${{ viewed.product.price }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

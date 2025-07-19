@@ -1,0 +1,133 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Outfitr{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        {% if product.image %}
+        <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.name }}">
+        {% else %}
+        <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+            <span class="text-muted">No image available</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <h1>{{ product.name }}</h1>
+        
+        <div class="d-flex align-items-center mb-3">
+            <div class="rating">
+                {% for i in "12345" %}
+                    {% if i|add:0 <= average_rating %}
+                        <i class="bi bi-star-fill text-warning"></i>
+                    {% else %}
+                        <i class="bi bi-star text-warning"></i>
+                    {% endif %}
+                {% endfor %}
+                <span class="ms-2">({{ product.reviews.count }} reviews)</span>
+            </div>
+        </div>
+        
+        <p class="fs-4 text-primary fw-bold">${{ product.price }}</p>
+        
+        <div class="mb-4">
+            <p><strong>Category:</strong> {{ product.category.name }}</p>
+            {% if product.subcategory %}
+            <p><strong>Subcategory:</strong> {{ product.subcategory.name }}</p>
+            {% endif %}
+            {% if product.brand %}
+            <p><strong>Brand:</strong> {{ product.brand }}</p>
+            {% endif %}
+            {% if product.color %}
+            <p><strong>Color:</strong> {{ product.color }}</p>
+            {% endif %}
+            {% if product.size %}
+            <p><strong>Size:</strong> {{ product.size }}</p>
+            {% endif %}
+        </div>
+        
+        <p>{{ product.description }}</p>
+        
+        <div class="d-flex mb-4">
+            {% if user.is_authenticated %}
+            <form action="{% url 'add_to_cart' product.id %}" method="POST" class="me-2">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Add to Cart</button>
+            </form>
+            
+            <form action="{% if product in request.user.userprofile.wishlist.all %}{% url 'remove_from_wishlist' product.id %}{% else %}{% url 'add_to_wishlist' product.id %}{% endif %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger">
+                    {% if product in request.user.userprofile.wishlist.all %}
+                        <i class="bi bi-heart-fill"></i> Remove from Wishlist
+                    {% else %}
+                        <i class="bi bi-heart"></i> Add to Wishlist
+                    {% endif %}
+                </button>
+            </form>
+            {% else %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">Login to Purchase</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h3>Customer Reviews</h3>
+    
+    {% if user.is_authenticated and not user_review %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Add Your Review</h5>
+            <form method="POST" action="{% url 'add_review' product.id %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Rating</label>
+                    <select name="rating" class="form-select" required>
+                        <option value="">Select rating</option>
+                        <option value="5">5 - Excellent</option>
+                        <option value="4">4 - Very Good</option>
+                        <option value="3">3 - Good</option>
+                        <option value="2">2 - Fair</option>
+                        <option value="1">1 - Poor</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comment</label>
+                    <textarea name="comment" class="form-control" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if reviews %}
+    {% for review in reviews %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <h5>{{ review.user.username }}</h5>
+                <div class="rating">
+                    {% for i in "12345" %}
+                        {% if i|add:0 <= review.rating %}
+                            <i class="bi bi-star-fill text-warning"></i>
+                        {% else %}
+                            <i class="bi bi-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="text-muted">{{ review.created_at|date:"F j, Y" }}</p>
+            <p>{{ review.comment }}</p>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-info">No reviews yet. Be the first to review!</div>
+    {% endif %}
+</div>
+{% endblock %}
